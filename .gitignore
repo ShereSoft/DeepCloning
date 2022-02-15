@@ -1,0 +1,10 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/src/DeepCloning/DeepCloningTests/bin
+/src/DeepCloning/DeepCloningTests/obj
+/src/DeepCloning/ShereSoft.DeepCloning/bin
+/src/DeepCloning/ShereSoft.DeepCloning/obj
+/src/DeepCloning/.vs
