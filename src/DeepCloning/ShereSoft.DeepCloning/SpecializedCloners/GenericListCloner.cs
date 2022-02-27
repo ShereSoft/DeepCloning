@@ -22,7 +22,7 @@ namespace ShereSoft.SpecializedCloners
 
             var lblRepeat = il.DefineLabel();
             var lblMoveNext = il.DefineLabel();
-            var t = type.GenericTypeArguments[0];
+            var t = type.GetGenericArguments()[0];
 
             il.DeclareLocal(type);
             il.DeclareLocal(typeof(IEnumerator<>).MakeGenericType(t));
@@ -30,13 +30,13 @@ namespace ShereSoft.SpecializedCloners
             il.DeclareLocal(typeof(bool));
 
             il.Emit(OpCodes.Ldarg_2);
-            il.Emit(OpCodes.Call, typeof(DeepCloningOptions).GetProperty(nameof(DeepCloningOptions.None.DeepCloneStrings)).GetMethod);
+            il.Emit(OpCodes.Call, typeof(DeepCloningOptions).GetProperty(nameof(DeepCloningOptions.None.DeepCloneStrings)).GetGetMethod());
             il.Emit(OpCodes.Stloc_3);
 
             il.Emit(OpCodes.Ldarg_0);
 
             il.Emit(OpCodes.Dup);
-            il.Emit(OpCodes.Call, type.GetProperty("Count").GetMethod);
+            il.Emit(OpCodes.Call, type.GetProperty("Count").GetGetMethod());
             il.Emit(OpCodes.Newobj, type.GetConstructor(new[] { typeof(int) }));
             il.Emit(OpCodes.Stloc_0);
 
@@ -50,7 +50,7 @@ namespace ShereSoft.SpecializedCloners
             il.Emit(OpCodes.Br_S, lblMoveNext);
             il.MarkLabel(lblRepeat);
             il.Emit(OpCodes.Ldloc_1);
-            il.Emit(OpCodes.Callvirt, typeof(IEnumerator<>).MakeGenericType(t).GetProperty("Current").GetMethod);
+            il.Emit(OpCodes.Callvirt, typeof(IEnumerator<>).MakeGenericType(t).GetProperty("Current").GetGetMethod());
             il.Emit(OpCodes.Stloc_2);
             il.Emit(OpCodes.Ldloc_0);
             il.Emit(OpCodes.Ldloc_2);
@@ -109,10 +109,10 @@ namespace ShereSoft.SpecializedCloners
             il.Emit(OpCodes.Ldloc_0);
             il.Emit(OpCodes.Ret);
 
-#if NET45 || NETCOREAPP
-            return (CloneObjectDelegate<T>)method.CreateDelegate(typeof(CloneObjectDelegate<T>));
-#else
+#if NET5_0_OR_GREATER
             return method.CreateDelegate<CloneObjectDelegate<T>>();
+#else
+            return (CloneObjectDelegate<T>)method.CreateDelegate(typeof(CloneObjectDelegate<T>));
 #endif
         }
     }

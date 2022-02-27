@@ -147,9 +147,9 @@ namespace DeepCloningTests
     struct ReadOnlySimpleStruct
     {
         public int Index { get; }
-        public string? Name { get; init; }
+        public string Name { get; init; }
         public Guid Id { get; private set; }
-        public string? FormattedName => Name != null && Name.Length > 2 ? $"{Char.ToUpper(Name[0])}{Name.Substring(1).ToLower()}" : Name?.ToUpper();
+        public string FormattedName => Name != null && Name.Length > 2 ? $"{Char.ToUpper(Name[0])}{Name.Substring(1).ToLower()}" : Name?.ToUpper();
 
         public ReadOnlySimpleStruct(int index, string name, Guid id)
         {

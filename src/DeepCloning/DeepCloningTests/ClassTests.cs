@@ -462,20 +462,20 @@ namespace DeepCloningTests
         {
             public int Int { get; set; }
             public DateTime DateTime { get; set; }
-            public string? String { get; set; }
-            public SimpleClass? Class { get; set; }
+            public string String { get; set; }
+            public SimpleClass Class { get; set; }
             public TestStruct Struct { get; set; }
         }
 
         public abstract class TestBaseClass
         {
-            public abstract string? Name { get; set; }
+            public abstract string Name { get; set; }
             public int Index { get; set; }
         }
 
         public class TestDerivedClass : TestBaseClass
         {
-            public override string? Name { get; set; }
+            public override string Name { get; set; }
         }
 
         public class Immutable

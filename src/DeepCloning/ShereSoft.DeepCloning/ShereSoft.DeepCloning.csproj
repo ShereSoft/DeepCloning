@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net5.0;netcoreapp3.1;net45</TargetFrameworks>
+    <TargetFrameworks>net6.0;net5.0;netcoreapp3.1;net40;net45;net46;net47;net48</TargetFrameworks>
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>disable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -12,9 +12,18 @@
     <PackageTags>deep clone;deep copy;object copy;object clone;clone;copy;deepclone;deepcloning;deepcopy;map;memberwisecopy;object;automapper;mapper</PackageTags>
     <PackageProjectUrl>https://github.com/ShereSoft/DeepCloning</PackageProjectUrl>
     <Copyright>Copyright © 2020-2022 Sheresoft</Copyright>
-    <Description>Provides a set of methods to deep-copy an instance of any object. Implemented in Common Intermediate Language (.NET Assembly) offering performance equivalent to hand-written code. No library dependencies.</Description>
-    <Version>1.0.0</Version>
-    <PackageReleaseNotes>This is a Beta release.</PackageReleaseNotes>
+    <Description>Provides a set of methods to deep-copy an instance of any object. Implemented in Common Intermediate Language (.NET Assembler) offering performance equivalent to hand-written code. No library dependencies.</Description>
+    <Version>1.0.1</Version>
+    <PackageReleaseNotes>*Made lock-free for initializing the cloner
+*Added .NET Framework support for 4.0, 4.6, 4.7 and 4.8</PackageReleaseNotes>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net6.0|AnyCPU'">
+    <WarningLevel>5</WarningLevel>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net6.0|AnyCPU'">
+    <WarningLevel>5</WarningLevel>
   </PropertyGroup>
 
 </Project>
