@@ -11,7 +11,7 @@ Provides a set of methods to deep-copy an instance of any object. Implemented in
 * Thread-safe
 * Includes extension methods (ObjectExtensions) for conveniently calling from any object instance (Recommended usage)
 * Unit Tested
-* Multi-targeted (.NET 6, .NET 5, .NET Core 3.1, .NET Framework 4.5)
+* Multi-targeted (.NET 6, .NET 5, .NET Core 3.1, .NET Framework 4.8, .NET Framework 4.7, .NET Framework 4.6, .NET Framework 4.5, .NET Framework 4.0)
 * No external library dependencies
 * No external calls
 <br />
