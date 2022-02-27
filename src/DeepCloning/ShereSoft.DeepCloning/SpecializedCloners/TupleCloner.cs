@@ -33,13 +33,13 @@ namespace ShereSoft.SpecializedCloners
             il.DeclareLocal(typeof(bool));  // DeepCloneStrings
 
             il.Emit(OpCodes.Ldarg_2);
-            il.Emit(OpCodes.Call, typeof(DeepCloningOptions).GetProperty(nameof(DeepCloningOptions.None.DeepCloneStrings)).GetMethod);
+            il.Emit(OpCodes.Call, typeof(DeepCloningOptions).GetProperty(nameof(DeepCloningOptions.None.DeepCloneStrings)).GetGetMethod());
             il.Emit(OpCodes.Stloc_0);
 
             foreach (var prop in type.GetProperties().OrderBy(p => p.Name))
             {
                 il.Emit(OpCodes.Ldarg_0);
-                il.Emit(OpCodes.Call, prop.GetMethod);
+                il.Emit(OpCodes.Call, prop.GetGetMethod());
 
                 if (prop.PropertyType.IsValueType)
                 {
@@ -71,14 +71,14 @@ namespace ShereSoft.SpecializedCloners
                 }
             }
 
-            var tupleCreate = typeof(Tuple).GetMethods().First(m => m.Name == "Create" && m.GetGenericArguments().Length == type.GenericTypeArguments.Length).MakeGenericMethod(type.GenericTypeArguments);
+            var tupleCreate = typeof(Tuple).GetMethods().First(m => m.Name == "Create" && m.GetGenericArguments().Length == type.GetGenericArguments().Length).MakeGenericMethod(type.GetGenericArguments());
             il.Emit(OpCodes.Call, tupleCreate);
             il.Emit(OpCodes.Ret);
 
-#if NET45 || NETCOREAPP
-            return (CloneObjectDelegate<T>)method.CreateDelegate(typeof(CloneObjectDelegate<T>));
-#else
+#if NET5_0_OR_GREATER
             return method.CreateDelegate<CloneObjectDelegate<T>>();
+#else
+            return (CloneObjectDelegate<T>)method.CreateDelegate(typeof(CloneObjectDelegate<T>));
 #endif
         }
     }

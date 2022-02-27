@@ -16,56 +16,38 @@ namespace ShereSoft
         internal protected delegate T CloneOneDimArrayDelegate<T>(T src, int length, Dictionary<object, object> objs, DeepCloningOptions options);
         internal protected delegate T CloneMultiDimArrayDelegate<T>(T src, int[] length, Dictionary<object, object> objs, DeepCloningOptions options);
 
-        internal protected readonly static ConcurrentDictionary<Type, byte> CompiledMapperTypes = new ConcurrentDictionary<Type, byte>();
+#if DEBUG
+        internal protected readonly static ConcurrentDictionary<string, Type> CompiledMapperTypes = new ConcurrentDictionary<string, Type>();
+#endif
 
-        internal static ConcurrentDictionary<Type, string> TypeNameTranslator = new ConcurrentDictionary<Type, string>(new Dictionary<Type, string>
+        internal readonly static HashSet<Type> DefaultUnclonableTypes = new HashSet<Type>(new[]
         {
-            { typeof(string), "string" },
-            { typeof(int), "int" },
-            { typeof(long), "long" },
-            { typeof(double), "double" },
-            { typeof(decimal), "decimal" },
-            { typeof(bool), "bool" },
-            { typeof(byte), "byte" },
-            { typeof(char), "char" },
-            { typeof(float), "float" },
-            { typeof(short), "short" },
-            { typeof(sbyte), "sbyte" },
-            { typeof(uint), "uint" },
-            { typeof(ulong), "ulong" },
-            { typeof(ushort), "ushort" },
-            { typeof(int?), "int?" },
-            { typeof(long?), "long?" },
-            { typeof(double?), "double?" },
-            { typeof(decimal?), "decimal?" },
-            { typeof(bool?), "bool?" },
-            { typeof(byte?), "byte?" },
-            { typeof(char?), "char?" },
-            { typeof(float?), "float?" },
-            { typeof(short?), "short?" },
-            { typeof(sbyte?), "sbyte?" },
-            { typeof(uint?), "uint?" },
-            { typeof(ulong?), "ulong?" },
-            { typeof(ushort?), "ushort?" },
+            typeof(Type),
+#if !NET40
+            typeof(Type).Assembly.Modules.SelectMany(m => m.GetTypes()).FirstOrDefault(t => t.Name == "RuntimeType"),
+            typeof(TypeInfo),
+#endif
+            typeof(System.Globalization.CultureInfo),
+            typeof(System.Globalization.NumberFormatInfo),
+            typeof(System.Globalization.DateTimeFormatInfo),
+            typeof(MemberInfo),
+            typeof(PropertyInfo),
+            typeof(MethodInfo),
+            typeof(FieldInfo),
+            typeof(ConstructorInfo),
         });
 
-        /// <summary>
-        /// Returns all the types of compiled cloners currently cached
-        /// </summary>
-        /// <returns>Types of cloners</returns>
+#if DEBUG
         public static Type[] GetCompiledClonerTypes()
         {
-            return CompiledMapperTypes.ToArray().Select(kv => kv.Key).OrderBy(n => n).ToArray();
+            return CompiledMapperTypes.ToArray().Select(kv => kv.Value).OrderBy(t => t.FullName).ToArray();
         }
 
-        /// <summary>
-        /// Returns the friendly type names of compiled cloners currently cached
-        /// </summary>
-        /// <returns>Friendly type names of cached cloners</returns>
         public static string[] GetCompiledClonerTypeNames()
         {
-            return CompiledMapperTypes.ToArray().Select(kv => ResolveTypeName(kv.Key)).OrderBy(n => n).ToArray();
+            return CompiledMapperTypes.ToArray().Select(kv => TypeNameResolver.Resolve(kv.Value)).OrderBy(n => n).ToArray();
         }
+#endif
 
         internal static bool IsSimpleType(Type type)
         {
@@ -76,8 +58,7 @@ namespace ShereSoft
 
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
             {
-                var t = type.GenericTypeArguments[0];
-
+                var t = type.GetGenericArguments()[0];
                 return (t.IsPrimitive || t.IsEnum || t == typeof(DateTime) || t == typeof(decimal) || t == typeof(Guid));
             }
 
@@ -111,14 +92,14 @@ namespace ShereSoft
 
             il.Emit(OpCodes.Ret);
 
-#if NET45 || NETCOREAPP
-            return (RedirectDelegate)method.CreateDelegate(typeof(RedirectDelegate));
-#else
+#if NET5_0_OR_GREATER
             return method.CreateDelegate<RedirectDelegate>();
+#else
+            return (RedirectDelegate)method.CreateDelegate(typeof(RedirectDelegate));            
 #endif
         }
 
-        internal protected static CloneOneDimArrayDelegate<T> BuidOneDimArrayCloner<T>(int length)
+        internal protected static CloneOneDimArrayDelegate<T> BuidOneDimArrayCloner<T>()
         {
             var type = typeof(T);
             var method = new DynamicMethod(String.Empty, type, new Type[] { type, typeof(int), typeof(Dictionary<object, object>), typeof(DeepCloningOptions) });
@@ -132,7 +113,7 @@ namespace ShereSoft
             il.DeclareLocal(typeof(bool));  // DeepCloneStrings
 
             il.Emit(OpCodes.Ldarg_3);
-            il.Emit(OpCodes.Call, typeof(DeepCloningOptions).GetProperty(nameof(DeepCloningOptions.None.DeepCloneStrings)).GetMethod);
+            il.Emit(OpCodes.Call, typeof(DeepCloningOptions).GetProperty(nameof(DeepCloningOptions.None.DeepCloneStrings)).GetGetMethod());
             il.Emit(OpCodes.Stloc_2);
 
             il.Emit(OpCodes.Ldarg_1);
@@ -263,10 +244,10 @@ namespace ShereSoft
             il.Emit(OpCodes.Ldloc_0);
             il.Emit(OpCodes.Ret);
 
-#if NET45 || NETCOREAPP
-            return (CloneOneDimArrayDelegate<T>)method.CreateDelegate(typeof(CloneOneDimArrayDelegate<T>));
-#else
+#if NET5_0_OR_GREATER
             return method.CreateDelegate<CloneOneDimArrayDelegate<T>>();
+#else
+            return (CloneOneDimArrayDelegate<T>)method.CreateDelegate(typeof(CloneOneDimArrayDelegate<T>));
 #endif
         }
 
@@ -281,7 +262,7 @@ namespace ShereSoft
             il.DeclareLocal(typeof(bool));  // DeepCloneStrings
 
             il.Emit(OpCodes.Ldarg_3);
-            il.Emit(OpCodes.Call, typeof(DeepCloningOptions).GetProperty(nameof(DeepCloningOptions.None.DeepCloneStrings)).GetMethod);
+            il.Emit(OpCodes.Call, typeof(DeepCloningOptions).GetProperty(nameof(DeepCloningOptions.None.DeepCloneStrings)).GetGetMethod());
             il.Emit(OpCodes.Stloc_1);
 
             var localCount = 1;
@@ -312,10 +293,10 @@ namespace ShereSoft
                 il.Emit(OpCodes.Stloc, localCount + i);  // rx = lengths[x]
             }
 
-#if NET45 || NETSTANDARD
-            var labelGroups = new Stack<Tuple<Label, Label>>();
-#else
+#if NETCOREAPP
             var labelGroups = new Stack<(Label, Label)>();
+#else
+            var labelGroups = new Stack<Tuple<Label, Label>>();
 #endif
 
             for (int i = 0; i < arrRank; i++)
@@ -330,10 +311,10 @@ namespace ShereSoft
                 var repeat = il.DefineLabel();
                 il.MarkLabel(repeat);
 
-#if NET45 || NETSTANDARD
-                labelGroups.Push(Tuple.Create(evaluate, repeat));
-#else
+#if NETCOREAPP
                 labelGroups.Push((evaluate, repeat));
+#else
+                labelGroups.Push(Tuple.Create(evaluate, repeat));
 #endif
             }
 
@@ -419,40 +400,11 @@ namespace ShereSoft
             il.Emit(OpCodes.Ldloc_0);  // dest
             il.Emit(OpCodes.Ret);
 
-#if NET45 || NETCOREAPP
-            return (CloneMultiDimArrayDelegate<T>)method.CreateDelegate(typeof(CloneMultiDimArrayDelegate<T>));
-#else
+#if NET5_0_OR_GREATER
             return method.CreateDelegate<CloneMultiDimArrayDelegate<T>>();
+#else
+            return (CloneMultiDimArrayDelegate<T>)method.CreateDelegate(typeof(CloneMultiDimArrayDelegate<T>));
 #endif
-        }
-
-        static string ResolveTypeName(Type type)
-        {
-            if (TypeNameTranslator.TryGetValue(type, out var name))
-            {
-                return name;
-            }
-
-            name = type.Name;
-
-            if (type.IsGenericType)
-            {
-                if (type.GetGenericTypeDefinition() == typeof(Nullable<>))
-                {
-                    name = $"{ResolveTypeName(type.GenericTypeArguments[0])}?";
-                }
-                else
-                {
-                    name = $"{name.Split('`')[0]}<{String.Join(",", type.GenericTypeArguments.Select(a => ResolveTypeName(a)))}>";
-                }
-            }
-
-            if (type.Namespace == null)
-            {
-                return name;
-            }
-
-            return $"{type.Namespace}.{name}";
         }
     }
 }

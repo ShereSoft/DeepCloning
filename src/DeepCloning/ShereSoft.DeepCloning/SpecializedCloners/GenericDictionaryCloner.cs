@@ -22,7 +22,7 @@ namespace ShereSoft.SpecializedCloners
 
             var lblRepeat = il.DefineLabel();
             var lblMoveNext = il.DefineLabel();
-            var t = typeof(KeyValuePair<,>).MakeGenericType(type.GenericTypeArguments);
+            var t = typeof(KeyValuePair<,>).MakeGenericType(type.GetGenericArguments());
 
             il.DeclareLocal(type);
             il.DeclareLocal(typeof(IEnumerator<>).MakeGenericType(t));
@@ -30,11 +30,11 @@ namespace ShereSoft.SpecializedCloners
             il.DeclareLocal(typeof(bool));
 
             il.Emit(OpCodes.Ldarg_2);
-            il.Emit(OpCodes.Call, typeof(DeepCloningOptions).GetProperty(nameof(DeepCloningOptions.None.DeepCloneStrings)).GetMethod);
+            il.Emit(OpCodes.Call, typeof(DeepCloningOptions).GetProperty(nameof(DeepCloningOptions.None.DeepCloneStrings)).GetGetMethod());
             il.Emit(OpCodes.Stloc_3);
 
             il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Call, type.GetProperty("Count").GetMethod);
+            il.Emit(OpCodes.Call, type.GetProperty("Count").GetGetMethod());
             il.Emit(OpCodes.Newobj, type.GetConstructor(new[] { typeof(int) }));
             il.Emit(OpCodes.Stloc_0);
 
@@ -55,7 +55,7 @@ namespace ShereSoft.SpecializedCloners
             il.Emit(OpCodes.Ldloca_S, 2);  // kv
             il.Emit(OpCodes.Callvirt, t.GetMethod("get_Key"));
 
-            var tKey = type.GenericTypeArguments[0];
+            var tKey = type.GetGenericArguments()[0];
 
             if (tKey == typeof(string))
             {
@@ -76,7 +76,7 @@ namespace ShereSoft.SpecializedCloners
             il.Emit(OpCodes.Ldloca_S, 2);  // kv
             il.Emit(OpCodes.Callvirt, t.GetMethod("get_Value"));
 
-            var tValue = type.GenericTypeArguments[1];
+            var tValue = type.GetGenericArguments()[1];
 
             if (tValue == typeof(string))
             {
@@ -126,10 +126,10 @@ namespace ShereSoft.SpecializedCloners
             il.Emit(OpCodes.Ldloc_0);
             il.Emit(OpCodes.Ret);
 
-#if NET45 || NETCOREAPP
-            return (CloneObjectDelegate<T>)method.CreateDelegate(typeof(CloneObjectDelegate<T>));
-#else
+#if NET5_0_OR_GREATER
             return method.CreateDelegate<CloneObjectDelegate<T>>();
+#else
+            return (CloneObjectDelegate<T>)method.CreateDelegate(typeof(CloneObjectDelegate<T>));
 #endif
         }
     }

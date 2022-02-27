@@ -14,7 +14,9 @@ namespace ShereSoft.Extensions
         /// <typeparam name="T">The type of object to clone.</typeparam>
         /// <param name="value">Any object</param>
         /// <returns>A deep-copied instance of the specified object.</returns>
+#if NET45 || NET451_OR_GREATER || NETCOREAPP
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         public static T DeepClone<T>(this T value)
         {
             if (value == null)
@@ -32,7 +34,9 @@ namespace ShereSoft.Extensions
         /// <param name="value">Any object</param>
         /// <param name="options">Options to control the cloning behavior</param>
         /// <returns>A deep-copied instance of the specified object.</returns>
+#if NET45 || NET451_OR_GREATER || NETCOREAPP
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         public static T DeepClone<T>(this T value, DeepCloningOptions options)
         {
             if (value == null)

@@ -19,18 +19,31 @@ namespace ShereSoft.SpecializedCloners
                 il.Emit(OpCodes.Ldarg_0);
                 il.Emit(OpCodes.Ret);
 
-#if NET45 || NETCOREAPP
-                return (CloneObjectDelegate<T>)method.CreateDelegate(typeof(CloneObjectDelegate<T>));
-#else
+#if NET5_0_OR_GREATER
                 return method.CreateDelegate<CloneObjectDelegate<T>>();
+#else
+                return (CloneObjectDelegate<T>)method.CreateDelegate(typeof(CloneObjectDelegate<T>));
 #endif
             }
 
             il.DeclareLocal(type);
             il.DeclareLocal(typeof(bool));  // DeepCloneStrings
 
+#if UNDER_DEVELOPMENT
+            il.DeclareLocal(typeof(bool));  // UseDefaultValueForUnclonableTypes
+            il.DeclareLocal(typeof(ICollection<Type>));  // UnclonableTypes
+
             il.Emit(OpCodes.Ldarg_2);
-            il.Emit(OpCodes.Call, typeof(DeepCloningOptions).GetProperty(nameof(DeepCloningOptions.None.DeepCloneSingletons)).GetMethod);
+            il.Emit(OpCodes.Call, typeof(DeepCloningOptions).GetProperty(nameof(DeepCloningOptions.None.UseDefaultValueForUnclonableTypes)).GetGetMethod());
+            il.Emit(OpCodes.Stloc_2);
+
+            il.Emit(OpCodes.Ldarg_2);
+            il.Emit(OpCodes.Call, typeof(DeepCloningOptions).GetProperty(nameof(DeepCloningOptions.None.UnclonableTypes)).GetGetMethod());
+            il.Emit(OpCodes.Stloc_3);
+#endif
+
+            il.Emit(OpCodes.Ldarg_2);
+            il.Emit(OpCodes.Call, typeof(DeepCloningOptions).GetProperty(nameof(DeepCloningOptions.None.DeepCloneSingletons)).GetGetMethod());
 
             var skipSingleTonDeepCloning = il.DefineLabel();
             il.Emit(OpCodes.Brtrue, skipSingleTonDeepCloning);
@@ -52,7 +65,7 @@ namespace ShereSoft.SpecializedCloners
             il.MarkLabel(skipSingleTonDeepCloning);
 
             il.Emit(OpCodes.Ldarg_2);
-            il.Emit(OpCodes.Call, typeof(DeepCloningOptions).GetProperty(nameof(DeepCloningOptions.None.DeepCloneStrings)).GetMethod);
+            il.Emit(OpCodes.Call, typeof(DeepCloningOptions).GetProperty(nameof(DeepCloningOptions.None.DeepCloneStrings)).GetGetMethod());
             il.Emit(OpCodes.Stloc_1);
 
             var target = type.GetConstructor(Type.EmptyTypes);
@@ -91,6 +104,58 @@ namespace ShereSoft.SpecializedCloners
                 {
                     var ft = field.FieldType;
 
+#if UNDER_DEVELOPMENT
+                    il.Emit(OpCodes.Ldloc_3);
+                    il.Emit(OpCodes.Ldtoken, ft);
+                    il.Emit(OpCodes.Call, typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle)));
+                    il.Emit(OpCodes.Callvirt, typeof(ICollection<Type>).GetMethod("Contains"));
+
+                    var continueCloning = il.DefineLabel();
+                    il.Emit(OpCodes.Brfalse, continueCloning);
+
+                    il.Emit(OpCodes.Ldloc_2);  // UseDefaultValueForUnclonableTypes
+
+                    var endOfFieldLoop = il.DefineLabel();
+                    var useDefault = il.DefineLabel();
+
+                    il.Emit(OpCodes.Brtrue, useDefault);
+
+                    if (ft.IsValueType)
+                    {
+                        // shallow copy
+                        il.Emit(OpCodes.Ldloca_S, 0);
+                        il.Emit(OpCodes.Ldarga_S, 0);
+                        il.Emit(OpCodes.Ldfld, field);
+                        il.Emit(OpCodes.Stfld, field);
+                        il.Emit(OpCodes.Br, endOfFieldLoop);
+
+                        // default value
+                        il.MarkLabel(useDefault);
+                        il.Emit(OpCodes.Ldloc_0);
+                        il.Emit(OpCodes.Ldflda, field);
+                        il.Emit(OpCodes.Initobj, ft);
+                        il.Emit(OpCodes.Br, endOfFieldLoop);
+                    }
+                    else
+                    {
+                        // shallow copy
+                        il.Emit(OpCodes.Ldloc_0);
+                        il.Emit(OpCodes.Ldarg_0);
+                        il.Emit(OpCodes.Ldfld, field);
+                        il.Emit(OpCodes.Stfld, field);
+                        il.Emit(OpCodes.Br, endOfFieldLoop);
+
+                        // default value
+                        il.MarkLabel(useDefault);
+                        il.Emit(OpCodes.Ldloc_0);
+                        il.Emit(OpCodes.Ldnull);
+                        il.Emit(OpCodes.Stfld, field);
+                        il.Emit(OpCodes.Br, endOfFieldLoop);
+                    }
+
+                    il.MarkLabel(continueCloning);
+#endif
+
                     if (type.IsValueType)
                     {
                         il.Emit(OpCodes.Ldloca_S, 0);
@@ -125,10 +190,6 @@ namespace ShereSoft.SpecializedCloners
                         il.MarkLabel(skipDeepCloneString);
                         il.Emit(OpCodes.Stfld, field);
                     }
-                    else if (ft == typeof(Type))
-                    {
-                        il.Emit(OpCodes.Stfld, field);
-                    }
                     else
                     {
                         il.Emit(OpCodes.Dup);
@@ -149,6 +210,10 @@ namespace ShereSoft.SpecializedCloners
 
                         il.MarkLabel(lblAvoidPopIfNotNull);
                     }
+
+#if UNDER_DEVELOPMENT
+                    il.MarkLabel(endOfFieldLoop);
+#endif
                 }
 
                 baseType = baseType.BaseType;
@@ -157,10 +222,10 @@ namespace ShereSoft.SpecializedCloners
             il.Emit(OpCodes.Ldloc_0);
             il.Emit(OpCodes.Ret);
 
-#if NET45 || NETCOREAPP
-            return (CloneObjectDelegate<T>)method.CreateDelegate(typeof(CloneObjectDelegate<T>));
-#else
+#if NET5_0_OR_GREATER
             return method.CreateDelegate<CloneObjectDelegate<T>>();
+#else
+            return (CloneObjectDelegate<T>)method.CreateDelegate(typeof(CloneObjectDelegate<T>));
 #endif
         }
     }
