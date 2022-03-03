@@ -17,9 +17,9 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 5.0.x
-    - name: Restore dependencies
-      run: dotnet restore /src/DeepCloning/ShereSoft.DeepCloning/ShereSoft.DeepCloning.csproj
+ #   - name: Restore dependencies
+ #     run: dotnet restore /src/DeepCloning/ShereSoft.DeepCloning/ShereSoft.DeepCloning.csproj
     - name: Build
-      run: dotnet build /src/DeepCloning/ShereSoft.DeepCloning/ShereSoft.DeepCloning.csproj --no-restore
+      run: dotnet build --configuration Release src/DeepCloning/ShereSoft.DeepCloning/ShereSoft.DeepCloning.csproj
  #   - name: Test
  #     run: dotnet test --no-build --verbosity normal
