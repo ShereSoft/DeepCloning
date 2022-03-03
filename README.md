@@ -61,3 +61,4 @@ Customer clone = customer.DeepClone(options);
 Debug.WriteLine(Object.ReferenceEquals(customer, clone));  // False (Default is reuse, NOT deep copy)
 ```
 > "static readonly" fields are assumed to be immutable. If your code is not, which by the way is not the best practice, use this option.
+> 
