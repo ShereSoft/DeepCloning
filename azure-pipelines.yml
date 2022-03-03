@@ -10,7 +10,7 @@ trigger:
 #  vmImage: 'windows-latest'
 
 pool:
-  name: local
+  name: MyPool
 
 variables:
   solution: '**/*.sln'
