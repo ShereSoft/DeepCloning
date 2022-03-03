@@ -3,7 +3,8 @@ Provides a set of methods to deep-copy an instance of any object. Implemented in
 
 [![](https://img.shields.io/nuget/v/ShereSoft.DeepCloning.svg)](https://www.nuget.org/packages/ShereSoft.DeepCloning/)
 [![](https://img.shields.io/nuget/dt/ShereSoft.DeepCloning)](https://www.nuget.org/packages/ShereSoft.DeepCloning/)
-[![Actions Status](https://github.com/ShereSoft/DeepCloning/workflows/Build/badge.svg)](https://github.com/ShereSoft/DeepCloning/actions)
+[![Actions Status](https://github.com/ShereSoft/DeepCloning/workflows/Build/badge.svg)](https://github.com/ShereSoft/DeepCloning/actions/Build)
+[![Actions Status](https://github.com/ShereSoft/DeepCloning/workflows/Unit%20Tests/badge.svg)](https://github.com/ShereSoft/DeepCloning/actions/Unit%20Tests)
 
 * Can deep-clone instances of any object
 * Implemented in Common Intermediate Language (.NET Assembly), compiled for each type at runtime, and cached for subsequent use. 
