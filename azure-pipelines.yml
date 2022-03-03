@@ -6,8 +6,10 @@
 trigger:
 - development
 
-pool:
-  vmImage: 'windows-latest'
+#pool:
+#  vmImage: 'windows-latest'
+
+pool: MyPool
 
 variables:
   solution: '**/*.sln'
