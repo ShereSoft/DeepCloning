@@ -18,7 +18,7 @@ jobs:
       with:
         dotnet-version: 5.0.x
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore \src\DeepCloning\ShereSoft.DeepCloning\ShereSoft.DeepCloning.csproj
     - name: Build
       run: dotnet build \src\DeepCloning\ShereSoft.DeepCloning\ShereSoft.DeepCloning.csproj --no-restore
  #   - name: Test
