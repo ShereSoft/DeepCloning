@@ -52,13 +52,14 @@ namespace ShereSoft.SpecializedCloners
             il.Emit(OpCodes.Ldloc_1);
             il.Emit(OpCodes.Callvirt, typeof(IEnumerator<>).MakeGenericType(t).GetProperty("Current").GetGetMethod());
             il.Emit(OpCodes.Stloc_2);
-            il.Emit(OpCodes.Ldloc_0);
-            il.Emit(OpCodes.Ldloc_2);
+            il.Emit(OpCodes.Ldloc_0);  // dest
 
             var add = type.GetMethod("Add");
 
             if (t == typeof(string))
             {
+                il.Emit(OpCodes.Ldloc_2);  // element
+
                 il.Emit(OpCodes.Ldloc_3);
                 var skipDeepCloneString = il.DefineLabel();
                 il.Emit(OpCodes.Brfalse, skipDeepCloneString);
@@ -71,28 +72,39 @@ namespace ShereSoft.SpecializedCloners
             {
                 if (!DeepCloning.IsSimpleType(t))
                 {
+                    il.Emit(OpCodes.Ldsfld, typeof(DeepCloning<>).MakeGenericType(t).GetField(nameof(DeepCloning<T>.CloneObject), BindingFlags.NonPublic | BindingFlags.Static));
+                    il.Emit(OpCodes.Ldloc_2);  // element
+
                     il.Emit(OpCodes.Ldarg_1);
                     il.Emit(OpCodes.Ldarg_2);
-                    il.Emit(OpCodes.Call, typeof(DeepCloning<>).MakeGenericType(t).GetMethod(nameof(DeepCloning<T>.DeepCloneStruct), BindingFlags.NonPublic | BindingFlags.Static));
+                    il.Emit(OpCodes.Call, typeof(CloneObjectDelegate<>).MakeGenericType(t).GetMethod("Invoke"));
+                }
+                else
+                {
+                    il.Emit(OpCodes.Ldloc_2);  // element
                 }
 
                 il.Emit(OpCodes.Call, add);
             }
             else
             {
+                il.Emit(OpCodes.Ldsfld, typeof(DeepCloning<>).MakeGenericType(t).GetField(nameof(DeepCloning<T>.CloneObject), BindingFlags.NonPublic | BindingFlags.Static));
+                il.Emit(OpCodes.Ldloc_2);  // element
                 il.Emit(OpCodes.Dup);
-                var lblSkipSetIfNull = il.DefineLabel();
-                il.Emit(OpCodes.Brfalse, lblSkipSetIfNull);
+                var lblSkipCloneIfNull = il.DefineLabel();
+                il.Emit(OpCodes.Brfalse, lblSkipCloneIfNull);
                 il.Emit(OpCodes.Ldarg_1);
                 il.Emit(OpCodes.Ldarg_2);
-                il.Emit(OpCodes.Call, typeof(DeepCloning<>).MakeGenericType(t).GetMethod(nameof(DeepCloning<T>.DeepCloneObject), BindingFlags.NonPublic | BindingFlags.Static));
+                il.Emit(OpCodes.Call, typeof(CloneObjectDelegate<>).MakeGenericType(t).GetMethod("Invoke"));
                 il.Emit(OpCodes.Call, add);
                 var lblAvoidPopIfNotNull = il.DefineLabel();
                 il.Emit(OpCodes.Br, lblAvoidPopIfNotNull);
 
-                il.MarkLabel(lblSkipSetIfNull);
+                il.MarkLabel(lblSkipCloneIfNull);
                 il.Emit(OpCodes.Pop);  // pop null value
-                il.Emit(OpCodes.Pop);  // pop dest ref
+                il.Emit(OpCodes.Pop);  // pop field ref
+                il.Emit(OpCodes.Ldnull);
+                il.Emit(OpCodes.Call, add);
 
                 il.MarkLabel(lblAvoidPopIfNotNull);
             }

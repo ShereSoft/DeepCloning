@@ -38,6 +38,15 @@ namespace ShereSoft.SpecializedCloners
 
             foreach (var prop in type.GetProperties().OrderBy(p => p.Name))
             {
+                if (prop.PropertyType.IsValueType && !DeepCloning.IsSimpleType(prop.PropertyType))
+                {
+                    il.Emit(OpCodes.Ldsfld, typeof(DeepCloning<>).MakeGenericType(prop.PropertyType).GetField(nameof(DeepCloning<T>.CloneObject), BindingFlags.NonPublic | BindingFlags.Static));
+                }
+                else if (!prop.PropertyType.IsValueType && prop.PropertyType != typeof(string))
+                {
+                    il.Emit(OpCodes.Ldsfld, typeof(DeepCloning<>).MakeGenericType(prop.PropertyType).GetField(nameof(DeepCloning<T>.CloneObject), BindingFlags.NonPublic | BindingFlags.Static));
+                }
+
                 il.Emit(OpCodes.Ldarg_0);
                 il.Emit(OpCodes.Call, prop.GetGetMethod());
 
@@ -47,7 +56,7 @@ namespace ShereSoft.SpecializedCloners
                     {
                         il.Emit(OpCodes.Ldarg_1);
                         il.Emit(OpCodes.Ldarg_2);
-                        il.Emit(OpCodes.Call, typeof(DeepCloning<>).MakeGenericType(prop.PropertyType).GetMethod(nameof(DeepCloning<T>.DeepCloneStruct), BindingFlags.NonPublic | BindingFlags.Static));
+                        il.Emit(OpCodes.Call, typeof(CloneObjectDelegate<>).MakeGenericType(prop.PropertyType).GetMethod("Invoke"));
                     }
                 }
                 else if (prop.PropertyType == typeof(string))
@@ -62,12 +71,21 @@ namespace ShereSoft.SpecializedCloners
                 else
                 {
                     il.Emit(OpCodes.Dup);
-                    var lblSkipSetIfNull = il.DefineLabel();
-                    il.Emit(OpCodes.Brfalse, lblSkipSetIfNull);
+                    var lblSkipCloneIfNull = il.DefineLabel();
+                    il.Emit(OpCodes.Brfalse, lblSkipCloneIfNull);
                     il.Emit(OpCodes.Ldarg_1);
                     il.Emit(OpCodes.Ldarg_2);
-                    il.Emit(OpCodes.Call, typeof(DeepCloning<>).MakeGenericType(prop.PropertyType).GetMethod(nameof(DeepCloning<T>.DeepCloneObject), BindingFlags.NonPublic | BindingFlags.Static));
-                    il.MarkLabel(lblSkipSetIfNull);
+                    il.Emit(OpCodes.Call, typeof(CloneObjectDelegate<>).MakeGenericType(prop.PropertyType).GetMethod("Invoke"));
+
+                    var gotoEnd = il.DefineLabel();
+                    il.Emit(OpCodes.Br, gotoEnd);
+
+                    il.MarkLabel(lblSkipCloneIfNull);
+                    il.Emit(OpCodes.Pop);  // null value
+                    il.Emit(OpCodes.Pop);  // field ref
+                    il.Emit(OpCodes.Ldnull);  // add back null value 
+
+                    il.MarkLabel(gotoEnd);
                 }
             }
 

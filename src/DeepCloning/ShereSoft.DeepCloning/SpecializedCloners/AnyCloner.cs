@@ -159,11 +159,27 @@ namespace ShereSoft.SpecializedCloners
                     if (type.IsValueType)
                     {
                         il.Emit(OpCodes.Ldloca_S, 0);
-                        il.Emit(OpCodes.Ldarga_S, 0);
                     }
                     else
                     {
                         il.Emit(OpCodes.Ldloc_0);
+                    }
+
+                    if (ft.IsValueType && !DeepCloning.IsSimpleType(ft))
+                    {
+                        il.Emit(OpCodes.Ldsfld, typeof(DeepCloning<>).MakeGenericType(ft).GetField(nameof(DeepCloning<T>.CloneObject), BindingFlags.NonPublic | BindingFlags.Static));
+                    }
+                    else if (!ft.IsValueType && ft != typeof(string))
+                    {
+                        il.Emit(OpCodes.Ldsfld, typeof(DeepCloning<>).MakeGenericType(ft).GetField(nameof(DeepCloning<T>.CloneObject), BindingFlags.NonPublic | BindingFlags.Static));
+                    }
+
+                    if (type.IsValueType)
+                    {
+                        il.Emit(OpCodes.Ldarga_S, 0);
+                    }
+                    else
+                    {
                         il.Emit(OpCodes.Ldarg_0);
                     }
 
@@ -171,16 +187,16 @@ namespace ShereSoft.SpecializedCloners
 
                     if (ft.IsValueType)
                     {
-                        if (!DeepCloning.IsSimpleType(ft))  // inline optimization
+                        if (!DeepCloning.IsSimpleType(ft))
                         {
                             il.Emit(OpCodes.Ldarg_1);
                             il.Emit(OpCodes.Ldarg_2);
-                            il.Emit(OpCodes.Call, typeof(DeepCloning<>).MakeGenericType(ft).GetMethod(nameof(DeepCloning<T>.DeepCloneStruct), BindingFlags.NonPublic | BindingFlags.Static));
+                            il.Emit(OpCodes.Call, typeof(CloneObjectDelegate<>).MakeGenericType(ft).GetMethod("Invoke"));
                         }
 
                         il.Emit(OpCodes.Stfld, field);
                     }
-                    else if (ft == typeof(string))  // inline optimization
+                    else if (ft == typeof(string))
                     {
                         il.Emit(OpCodes.Ldloc_1);
                         var skipDeepCloneString = il.DefineLabel();
@@ -199,13 +215,14 @@ namespace ShereSoft.SpecializedCloners
 
                         il.Emit(OpCodes.Ldarg_1);
                         il.Emit(OpCodes.Ldarg_2);
-                        il.Emit(OpCodes.Call, typeof(DeepCloning<>).MakeGenericType(ft).GetMethod(nameof(DeepCloning<T>.DeepCloneObject), BindingFlags.NonPublic | BindingFlags.Static));
+                        il.Emit(OpCodes.Call, typeof(CloneObjectDelegate<>).MakeGenericType(ft).GetMethod("Invoke"));
                         il.Emit(OpCodes.Stfld, field);
                         var lblAvoidPopIfNotNull = il.DefineLabel();
                         il.Emit(OpCodes.Br, lblAvoidPopIfNotNull);
 
                         il.MarkLabel(lblSkipSetIfNull);
                         il.Emit(OpCodes.Pop);  // pop null value
+                        il.Emit(OpCodes.Pop);  // pop field ref
                         il.Emit(OpCodes.Pop);  // pop dest ref
 
                         il.MarkLabel(lblAvoidPopIfNotNull);
