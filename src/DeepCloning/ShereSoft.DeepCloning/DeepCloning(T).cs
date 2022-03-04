@@ -12,9 +12,7 @@ namespace ShereSoft
     /// <typeparam name="T">The type of object to clone.</typeparam>
     public sealed class DeepCloning<T> : DeepCloning
     {
-        static CloneObjectDelegate<T> CloneObject = null;
-        static CloneOneDimArrayDelegate<T> CloneOneDimArray = null;
-        static CloneMultiDimArrayDelegate<T> CloneMultiDimArray = null;
+        internal static CloneObjectDelegate<T> CloneObject = null;
         static ConcurrentDictionary<Type, RedirectDelegate> Redirects = new ConcurrentDictionary<Type, RedirectDelegate>();
 
         readonly static Type DeclaredType = typeof(T);
@@ -27,11 +25,11 @@ namespace ShereSoft
 
                 if (arrRank == 1)
                 {
-                    CloneOneDimArray = BuidOneDimArrayCloner<T>();
+                    CloneObject = OneDimArrayCloner.Buid<T>();
                 }
                 else
                 {
-                    CloneMultiDimArray = BuidMultiDimArrayCloner<T>(arrRank);
+                    CloneObject = MultiDimArrayCloner.Buid<T>();
                 }
             }
             else if (DeclaredType.IsGenericType && (DeclaredType.GetGenericTypeDefinition() == typeof(List<>) || DeclaredType.GetGenericTypeDefinition() == typeof(HashSet<>)))
@@ -59,7 +57,7 @@ namespace ShereSoft
             {
                 if (IsSimpleType(DeclaredType))
                 {
-                    CloneObject = (src, objs, options) => src;
+                    CloneObject = CloneSimpleType;
                 }
                 else
                 {
@@ -73,19 +71,11 @@ namespace ShereSoft
             }
             else if (DeclaredType == typeof(string))
             {
-                CloneObject = (src, objs, options) =>
-                {
-                    if (options.DeepCloneStrings)
-                    {
-                        return (T)(object)new String(((string)(object)src).ToCharArray());
-                    }
-
-                    return src;
-                };
+                CloneObject = CloneString;
             }
             else if (DeclaredType == typeof(object))
             {
-                CloneObject = delegate { return (T)new object(); };
+                CloneObject = CloneObjectType;
             }
             else if (!DeclaredType.IsAbstract && !DeclaredType.IsInterface)
             {
@@ -93,12 +83,52 @@ namespace ShereSoft
                 
                 if (anyCloner != null)
                 {
-                    CloneObject = anyCloner;
+                    if (DeclaredType.IsSealed)
+                    {
+                        CloneObject = (src, objs, options) =>
+                        {
+                            if (objs.TryGetValue(src, out var existingClone))
+                            {
+                                return (T)existingClone;
+                            }
+
+                            return anyCloner(src, objs, options);
+                        };
+                    }
+                    else
+                    {
+                        CloneObject = (src, objs, options) =>
+                        {
+                            var actualType = src.GetType();
+
+                            if (actualType != DeclaredType)
+                            {
+                                if (!Redirects.TryGetValue(actualType, out var redirect))
+                                {
+                                    redirect = BuildRedirect(actualType);
+                                    Redirects.TryAdd(actualType, redirect);
+                                }
+
+                                return (T)redirect(src, options);
+                            }
+
+                            if (objs.TryGetValue(src, out var existingClone))
+                            {
+                                return (T)existingClone;
+                            }
+
+                            return anyCloner(src, objs, options);
+                        };
+                    }
                 }
+            }
+            else
+            {
+                CloneObject = CloneAbstractType;
             }
 
 #if DEBUG
-            if (CloneObject != null || CloneOneDimArray != null || CloneMultiDimArray != null)
+            if (CloneObject != null)
             {
                 CompiledMapperTypes.TryAdd(DeclaredType.FullName, DeclaredType);
             }
@@ -115,7 +145,12 @@ namespace ShereSoft
 #endif
         public static T Copy(T value)
         {
-            return Copy(value, DeepCloningOptions.None);
+            if (value == null)
+            {
+                return default;
+            }
+
+            return CloneObject(value, new Dictionary<object, object>(), DeepCloningOptions.None);
         }
 
         /// <summary>
@@ -124,6 +159,9 @@ namespace ShereSoft
         /// <param name="value">Any object</param>
         /// <param name="options">Options to control the cloning behavior</param>
         /// <returns>A deep-copied instance of the specified object.</returns>
+#if NET45 || NET451_OR_GREATER || NETCOREAPP
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         public static T Copy(T value, DeepCloningOptions options)
         {
             if (value == null)
@@ -131,72 +169,70 @@ namespace ShereSoft
                 return default;
             }
             
-            return DeepCloneObject(value, new Dictionary<object, object>(), options ?? DeepCloningOptions.None);
+            return CloneObject(value, new Dictionary<object, object>(), options ?? DeepCloningOptions.None);
         }
 
-        internal static T DeepCloneStruct(T value, Dictionary<object, object> reusableClones, DeepCloningOptions options)
-        {
-            return CloneObject(value, reusableClones, options);
-        }
-
-        internal static T DeepCloneObject(T value, Dictionary<object, object> reusableClones, DeepCloningOptions options)
-        {
-            if (!DeclaredType.IsSealed)
-            {
-                var actualType = value.GetType();
-
-                if (actualType != DeclaredType)
-                {
-                    if (!Redirects.TryGetValue(actualType, out var redirect))
-                    {
-                        redirect = BuildRedirect(actualType);
-                        Redirects.TryAdd(actualType, redirect);
-                    }
-
-                    return (T)redirect(value, options);
-                }
-            }
-
-#if UNDER_DEVELOPMENT
-            if (options.UnclonableTypes.Contains(DeclaredType))
-            {
-                if (options.UseDefaultValueForUnclonableTypes)
-                {
-                    return default;
-                }
-                else
-                {
-                    return value;
-                }
-            }
+#if NET45 || NET451_OR_GREATER || NETCOREAPP
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
+        static T CloneSimpleType(T value, Dictionary<object, object> reusableClones, DeepCloningOptions options)
+        {
+            return value;
+        }
 
-            if (!DeclaredType.IsValueType && reusableClones.TryGetValue(value, out var existingClone))
+#if NET45 || NET451_OR_GREATER || NETCOREAPP
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        static T CloneString(T value, Dictionary<object, object> reusableClones, DeepCloningOptions options)
+        {
+            if (options.DeepCloneStrings)
+            {
+                return (T)(object)new String(((string)(object)value).ToCharArray());
+            }
+
+            return value;
+        }
+
+#if NET45 || NET451_OR_GREATER || NETCOREAPP
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        static T CloneObjectType(T value, Dictionary<object, object> reusableClones, DeepCloningOptions options)
+        {
+            var actualType = value.GetType();
+
+            if (actualType != DeclaredType)
+            {
+                if (!Redirects.TryGetValue(actualType, out var redirect))
+                {
+                    redirect = BuildRedirect(actualType);
+                    Redirects.TryAdd(actualType, redirect);
+                }
+
+                return (T)redirect(value, options);
+            }
+
+            if (reusableClones.TryGetValue(value, out var existingClone))
             {
                 return (T)existingClone;
             }
 
-            if (CloneObject != null)
+            return (T)new object();
+        }
+
+#if NET45 || NET451_OR_GREATER || NETCOREAPP
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        static T CloneAbstractType(T value, Dictionary<object, object> reusableClones, DeepCloningOptions options)
+        {
+            var actualType = value.GetType();
+
+            if (!Redirects.TryGetValue(actualType, out var redirect))
             {
-                return CloneObject(value, reusableClones, options);
+                redirect = BuildRedirect(actualType);
+                Redirects.TryAdd(actualType, redirect);
             }
 
-            var arr = (Array)(object)value;
-            var arrRank = arr.Rank;
-
-            if (CloneOneDimArray != null)
-            {
-                return CloneOneDimArray(value, arr.Length, reusableClones, options);
-            }
-
-            var lengths = new int[arrRank];
-
-            for (int i = 0; i < lengths.Length; i++)
-            {
-                lengths[i] = arr.GetLength(i);
-            }
-
-            return CloneMultiDimArray(value, lengths, reusableClones, options);
+            return (T)redirect(value, options);
         }
     }
 }

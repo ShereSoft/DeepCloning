@@ -296,6 +296,24 @@ namespace DeepCloningTests
                 Assert.Equal(original.Ints[i], clone.Ints[i]);
             }
 
+            Assert.NotNull(clone.Structs);
+            Assert.NotSame(original.Structs, clone.Structs);
+
+            for (int i = 0; i < original.Structs.Length; i++)
+            {
+                Assert.Equal(original.Structs[i].Code, clone.Structs[i].Code);
+                Assert.Equal(original.Structs[i].Number, clone.Structs[i].Number);
+            }
+
+            Assert.NotNull(clone.Classes);
+            Assert.NotSame(original.Classes, clone.Classes);
+
+            for (int i = 0; i < original.Structs.Length; i++)
+            {
+                Assert.Equal(original.Classes[i].Int, clone.Classes[i].Int);
+                Assert.Equal(original.Classes[i].String, clone.Classes[i].String);
+            }
+
             Assert.NotNull(clone.Strings);
             Assert.NotSame(original.Strings, clone.Strings);
 
@@ -325,7 +343,19 @@ namespace DeepCloningTests
 
             for (int i = 0; i < original.StringList.Count; i++)
             {
-                Assert.Equal(original.Strings[i], clone.Strings[i]);
+                Assert.Equal(original.StringList[i], clone.StringList[i]);
+            }
+
+            Assert.NotNull(clone.StructList);
+            Assert.NotSame(original.StructList, clone.StructList);
+            Assert.Equal(original.StructList.Count, clone.StructList.Count);
+
+            Assert.NotNull(clone.MixedList);
+            Assert.NotSame(original.MixedList, clone.MixedList);
+
+            for (int i = 0; i < original.MixedList.Count; i++)
+            {
+                Assert.Equal(original.MixedList[i] != null, clone.MixedList[i] != null);
             }
 
             Assert.NotNull(clone.Dictionary);
@@ -343,6 +373,17 @@ namespace DeepCloningTests
             Assert.Equal(original.TwoDimArray[original.TwoDimArray.GetLength(0) - 1, 0], clone.TwoDimArray[clone.TwoDimArray.GetLength(0) - 1, 0]);
             Assert.Equal(original.TwoDimArray[original.TwoDimArray.GetLength(0) - 1, original.TwoDimArray.GetLength(1) - 1], clone.TwoDimArray[original.TwoDimArray.GetLength(0) - 1, original.TwoDimArray.GetLength(1) - 1]);
 
+            Assert.NotNull(clone.TwoDimStructs);
+            Assert.NotSame(original.TwoDimStructs, clone.TwoDimStructs);
+            Assert.Equal(original.TwoDimStructs.Length, clone.TwoDimStructs.Length);
+
+            Assert.NotNull(clone.TwoDimClasses);
+            Assert.NotSame(original.TwoDimClasses, clone.TwoDimClasses);
+            Assert.Equal(original.TwoDimClasses[0, 0] != null, clone.TwoDimClasses[0, 0] != null);
+            Assert.Equal(original.TwoDimClasses[0, original.TwoDimClasses.GetLength(1) - 1] != null, clone.TwoDimClasses[0, clone.TwoDimClasses.GetLength(1) - 1] != null);
+            Assert.Equal(original.TwoDimClasses[original.TwoDimClasses.GetLength(0) - 1, 0] != null, clone.TwoDimClasses[clone.TwoDimClasses.GetLength(0) - 1, 0] != null);
+            Assert.Equal(original.TwoDimClasses[original.TwoDimClasses.GetLength(0) - 1, original.TwoDimClasses.GetLength(1) - 1] != null, clone.TwoDimClasses[original.TwoDimClasses.GetLength(0) - 1, original.TwoDimClasses.GetLength(1) - 1] != null);
+
             Assert.NotNull(clone.TwoDimEmptyArray);
             Assert.NotSame(original.TwoDimEmptyArray, clone.TwoDimEmptyArray);
 
@@ -358,18 +399,27 @@ namespace DeepCloningTests
             Assert.Equal(original.Struct.Number, clone.Struct.Number);
 
             Assert.NotSame(original.Tuple, clone.Tuple);
+            Assert.Same(original.Tuple.GetType(), clone.Tuple.GetType());
             Assert.Equal(original.Tuple.Item1, clone.Tuple.Item1);
             Assert.Equal(original.Tuple.Item2, clone.Tuple.Item2);
+
+            Assert.NotSame(original.Tuple2, clone.Tuple2);
+            Assert.Same(original.Tuple2.GetType(), clone.Tuple2.GetType());
+            Assert.Equal(original.Tuple2.Item1.GetType(), clone.Tuple2.Item1.GetType());
+            Assert.Equal(original.Tuple2.Item2.GetType(), clone.Tuple2.Item2.GetType());
+            Assert.Equal(original.Tuple2.Item3 == null, clone.Tuple2.Item3 == null);
+            Assert.Equal(original.Tuple2.Item4 == null, clone.Tuple2.Item4 == null);
 
             Assert.Equal(original.ValueTuple.Item1, clone.ValueTuple.Item1);
             Assert.Equal(original.ValueTuple.Item2, clone.ValueTuple.Item2);
 
-            Assert.NotNull(clone.StringList);
-            Assert.NotSame(original.StringList, clone.StringList);
+            Assert.NotNull(clone.StringListInterface);
+            Assert.NotSame(original.StringListInterface, clone.StringListInterface);
+            Assert.Same(original.StringListInterface.GetType(), clone.StringListInterface.GetType());
 
-            for (int i = 0; i < original.StringList.Count; i++)
+            for (int i = 0; i < original.StringListInterface.Count; i++)
             {
-                Assert.Equal(original.Strings[i], clone.Strings[i]);
+                Assert.Equal(original.StringListInterface[i], clone.StringListInterface[i]);
             }
 
             Assert.NotNull(clone.DerivedClassDefinedAsBaseClass);
@@ -381,11 +431,16 @@ namespace DeepCloningTests
             Assert.Equal(original.NullableInt.HasValue, clone.NullableInt.HasValue);
             Assert.Equal(original.NullableInt.GetValueOrDefault(), clone.NullableInt.GetValueOrDefault());
 
+            Assert.NotSame(original.AnyObject, clone.AnyObject);
+            Assert.Same(original.AnyObject.GetType(), clone.AnyObject.GetType());
+
             Assert.NotNull(clone.ImmutableObject);
             Assert.Equal(original.ImmutableObject.Flag, clone.ImmutableObject.Flag);
             Assert.Equal(original.ImmutableObject.GetOnly, clone.ImmutableObject.GetOnly);
             Assert.Equal(original.ImmutableObject.PrivateSet, clone.ImmutableObject.PrivateSet);
 
+            Assert.NotSame(original.AnonymousObject, clone.AnonymousObject);
+            Assert.Same(original.AnonymousObject.GetType(), clone.AnonymousObject.GetType());
         }
 
         public class TestClass
@@ -406,20 +461,27 @@ namespace DeepCloningTests
             public uint UInt { get; set; } = uint.MaxValue;
             public ulong ULong { get; set; } = ulong.MaxValue;
             public int[] Ints { get; set; } = new[] { 1, 2, 3, 4, 5 };
+            public TestStruct[] Structs { get; set; } = new[] { new TestStruct(), new TestStruct() };
+            public SimpleClass[] Classes { get; set; } = new[] { new SimpleClass(), new SimpleClass(), null };
             public int[,] TwoDimArray { get; set; } = new int[,] { { 11, 12 }, { 21, 22 }, { 31, 32 }, { 41, 42 } };
             public int[,] TwoDimEmptyArray { get; set; } = new int[0, 0];
             public int[,,] ThreeDimArray { get; set; } = new int[,,] { { { 111 }, { 112 }, { 113 } }, { { 114 }, { 115 }, { 116 } }, { { 117 }, { 118 }, { 119 } } };
             public int[,,] ThreeDimEmptyArray { get; set; } = new int[0, 0, 0];
+            public TestStruct[,] TwoDimStructs { get; set; } = new TestStruct[,] { { new TestStruct(), new TestStruct() }, { new TestStruct(), new TestStruct() } };
+            public SimpleClass[,] TwoDimClasses { get; set; } = new SimpleClass[,] { { new SimpleClass(), new SimpleClass() }, { new SimpleClass(), null } };
             public string[] Strings { get; set; } = new[] { "ABC", "XYZ", };
             public TestClass Self { get; set; }
             public TestStruct Struct { get; set; } = new TestStruct { Code = "ABC", Number = 999 };
             public List<int> IntList { get; set; } = new List<int> { 100, 200, 300, 400, 500 };
-            public List<string> StringList { get; set; } = new List<string> { "ABC", "XYZ", };
+            public List<string> StringList { get; set; } = new List<string> { "ABC", null, "XYZ", };
             public List<Record> RecordList { get; set; } = new List<Record> { new Record { Int32 = 1 }, new Record { Int32 = 2 } };
+            public List<TestStruct> StructList { get; set; } = new List<TestStruct> { new TestStruct(), new TestStruct() };
+            public List<SimpleClass> MixedList { get; set; } = new List<SimpleClass> { new SimpleClass(), null, };
             public Dictionary<int, string> Dictionary { get; set; } = new Dictionary<int, string> { { 1, "ONE" }, { 2, "TWO" }, { 3, "THREE" }, { 4, "FOUR" }, { 5, "FIVE" } };
             public Tuple<int, string> Tuple { get; set; } = System.Tuple.Create(123, "IJK");
+            public Tuple<SimpleClass, TestStruct, SimpleClass, string> Tuple2 { get; set; } = System.Tuple.Create(new SimpleClass(), new TestStruct(), (SimpleClass)null, (string)null);
             public (int, string) ValueTuple { get; set; } = (123, "YKK");
-            public IList<string> StringListInterface { get; set; } = new List<string> { "FIRST", "SECOND" };
+            public IList<string> StringListInterface { get; set; } = new List<string> { "FIRST", null, "SECOND" };
             public TestBaseClass DerivedClassDefinedAsBaseClass { get; set; } = new TestDerivedClass { Index = 1, Name = "OK" };
             public int? NullableInt { get; set; } = 1;
             public Immutable ImmutableObject { get; set; } = new Immutable(333) { Flag = true };
@@ -438,8 +500,8 @@ namespace DeepCloningTests
                     },
                 },
             };
-            public object AnyObject { get; set; } = DeepCloningOptions.None;
-            public HashSet<string> HashSet = new HashSet<string> { "ONE", "TWO", "ONE" };
+            public object AnyObject { get; set; } = new DeepCloningOptions { DeepCloneStrings = true };
+            public HashSet<string> HashSet = new HashSet<string> { "ONE", "TWO", null, "ONE" };
 
             public TestClass()
             {

@@ -1,22 +1,20 @@
 # DeepCloning
-Provides a set of methods to deep-copy an instance of any object. Implemented in Common Intermediate Language (.NET Assembly) offering performance equivalent to hand-written code. No library dependencies.
+Provides a set of methods to deep-copy an instance of any object. Implemented in Common Intermediate Language (.NET Assembler) offering performance equivalent to hand-written code. No library dependencies.
 
 [![](https://img.shields.io/nuget/v/ShereSoft.DeepCloning.svg)](https://www.nuget.org/packages/ShereSoft.DeepCloning/)
 [![](https://img.shields.io/nuget/dt/ShereSoft.DeepCloning)](https://www.nuget.org/packages/ShereSoft.DeepCloning/)
-[![Actions Status](https://github.com/ShereSoft/DeepCloning/workflows/Build/badge.svg)](https://github.com/ShereSoft/DeepCloning/actions/Build)
-[![Actions Status](https://github.com/ShereSoft/DeepCloning/workflows/Unit%20Tests/badge.svg)](https://github.com/ShereSoft/DeepCloning/actions/Unit%20Tests)
+[![Actions Status](https://github.com/ShereSoft/DeepCloning/workflows/Build/badge.svg)](https://github.com/ShereSoft/DeepCloning/actions/)
 
-* Can deep-clone instances of any object
-* Implemented in Common Intermediate Language (.NET Assembly), compiled for each type at runtime, and cached for subsequent use. 
-* No use of Reflection for cloning
-* Configurable for string handling (deep clone or not) and singleton handling (reuse or clone)
-* Thread-safe
-* Includes extension methods (ObjectExtensions) for conveniently calling from any object instance (Recommended usage)
+* Can deep-clone instances of any object, including immutables, multi-dimensional arrays and non-public objects
+* Maintains shared references within the instance including any circular references
+* Uses generic cloner types custom-built and compiled at runtime
+* Largely written in Common Intermediate Language (.NET Assembler) for performance (No use of Reflection for cloning)
+* Configurable for string handling (shallow-copy or deep-copy) and singleton handling (try to reuse or deep-copy)
+* Thread-Safe and lock-free
+* Includes extension methods (ShereSoft.Extensions.ObjectExtensions) for conveniently calling from any object instance
 * Unit Tested
 * Multi-targeted (.NET 6, .NET 5, .NET Core 3.1, .NET Framework 4.8, .NET Framework 4.7, .NET Framework 4.6, .NET Framework 4.5, .NET Framework 4.0)
-* No external library dependencies
-* No external calls
-<br />
+* No external library dependencies whatsoever
 
 ## QUICK START
 Using the extension methods (included) is recommended.

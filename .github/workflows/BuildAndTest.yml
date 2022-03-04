@@ -1,4 +1,4 @@
-name: Unit Tests
+name: Build and Test
 
 on:
   push:
@@ -17,7 +17,9 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 6.0.x
+ #   - name: Restore dependencies
+ #     run: dotnet restore /src/DeepCloning/ShereSoft.DeepCloning/ShereSoft.DeepCloning.csproj
     - name: Build
-      run: dotnet build --configuration Release src/DeepCloning/ShereSoft.DeepCloning/ShereSoft.DeepCloning.csproj
+      run: dotnet build --configuration Debug src/DeepCloning/ShereSoft.DeepCloning/ShereSoft.DeepCloning.csproj
     - name: Test
       run: dotnet test --verbosity normal src/DeepCloning/DeepCloningTests/DeepCloningTests.csproj

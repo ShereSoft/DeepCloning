@@ -9,13 +9,34 @@
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/ShereSoft/DeepCloning</RepositoryUrl>
-    <PackageTags>deep clone;deep copy;object copy;object clone;clone;copy;deepclone;deepcloning;deepcopy;map;memberwisecopy;object;automapper;mapper</PackageTags>
+    <PackageTags>deep clone;deep copy;object copy;object clone;clone;copy;deepclone;deepcloning;deepcopy;map;memberwisecopy;object;automapper;mapper;extensions;deepcloner;deep cloner;fast;anyclone;il;fastdeepcloner;GeorgeCloney;serialize'serialization;parsing;nclone;objectclone;shallow copy;shallowcopy</PackageTags>
     <PackageProjectUrl>https://github.com/ShereSoft/DeepCloning</PackageProjectUrl>
     <Copyright>Copyright © 2020-2022 Sheresoft</Copyright>
-    <Description>Provides a set of methods to deep-copy an instance of any object. Implemented in Common Intermediate Language (.NET Assembler) offering performance equivalent to hand-written code. No library dependencies.</Description>
-    <Version>1.0.1</Version>
-    <PackageReleaseNotes>*Made lock-free for initializing the cloner
-*Added .NET Framework support for 4.0, 4.6, 4.7 and 4.8</PackageReleaseNotes>
+    <Description>Provides a set of methods to deep-copy an instance of any object. Implemented in Common Intermediate Language (.NET Assembler) offering performance equivalent to hand-written C# code. Multi-targeted libraries. (NOT a .NET Standard library) No dependencies.</Description>
+    <Version>1.0.2</Version>
+    <PackageReleaseNotes>
+1.0.2
+ * Fixed issues with copying null elements in collections
+ * Improved performance by a single delegate, more optimized runtime evaluation, more inlining implementation and more optimized Assembler code
+ * Added unit tests for the resolved issues
+ * Reduced the assembly size.
+ 
+1.0.1
+ * Added .NET Framework support for 4.0, 4.6, 4.7 and 4.8
+ * Made cloner creation lock-free
+ 
+1.0.0
+ * Can deep-clone instances of any object
+ * Implemented in Common Intermediate Language (.NET Assembly), compiled for each type at runtime, and cached for subsequent use.
+ * No use of Reflection for cloning
+ * Configurable for string handling (deep clone or not) and singleton handling (reuse or clone)
+ * Thread-safe
+ * Includes extension methods (ObjectExtensions) for conveniently calling from any object instance (Recommended usage)
+ * Unit Tested
+ * Multi-targeted (.NET 6, .NET 5, .NET Core 3.1, .NET Framework 4.5)
+ * No external library dependencies
+ * No external calls
+</PackageReleaseNotes>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net6.0|AnyCPU'">

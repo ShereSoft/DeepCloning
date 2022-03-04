@@ -4,6 +4,7 @@ using System.Linq;
 
 namespace ShereSoft
 {
+#if DEBUG
     sealed class TypeNameResolver
     {
         internal readonly static Dictionary<Type, string> TypeNameTranslator = new Dictionary<Type, string>
@@ -66,4 +67,5 @@ namespace ShereSoft
             return $"{type.Namespace}.{name}";
         }
     }
+#endif
 }
