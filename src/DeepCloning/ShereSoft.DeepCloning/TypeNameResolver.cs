@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace ShereSoft
 {
-#if UNDER_DEVELOPMENT
+#if DEBUG
     sealed class TypeNameResolver
     {
         internal readonly static Dictionary<Type, string> TypeNameTranslator = new Dictionary<Type, string>
