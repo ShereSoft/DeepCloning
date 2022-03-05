@@ -1,9 +1,5 @@
 ﻿using ShereSoft;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace DeepCloningTests
@@ -58,7 +54,7 @@ namespace DeepCloningTests
         [Fact]
         public void Copy_DeepCopies_BoxedSimpleProperties()
         {
-            var original = new SimpleStruct
+            var original = new TestStruct
             {
                 Int64 = 987654,
                 DateTime = DateTime.UtcNow,
@@ -71,7 +67,7 @@ namespace DeepCloningTests
 
             var clone = DeepCloning<object>.Copy(boxed);
 
-            var unboxedClone = (SimpleStruct)clone;
+            var unboxedClone = (TestStruct)clone;
 
             Assert.Equal(original.Int64, unboxedClone.Int64);
             Assert.Equal(original.DateTime, unboxedClone.DateTime);
@@ -83,7 +79,7 @@ namespace DeepCloningTests
         [Fact]
         public void Copy_DeepCopies_SimpleProperties()
         {
-            var original = new SimpleStruct
+            var original = new TestStruct
             {
                 Int64 = 987654,
                 DateTime = DateTime.UtcNow,
@@ -92,7 +88,7 @@ namespace DeepCloningTests
                 String = "STR",
             };
 
-            var clone = DeepCloning<SimpleStruct>.Copy(original);
+            var clone = DeepCloning<TestStruct>.Copy(original);
 
             Assert.Equal(original.Int64, clone.Int64);
             Assert.Equal(original.DateTime, clone.DateTime);
@@ -159,7 +155,7 @@ namespace DeepCloningTests
         }
     }
 
-    struct SimpleStruct
+    struct TestStruct
     {
         public long Int64 { get; set; }
         public DateTime DateTime { get; set; }
