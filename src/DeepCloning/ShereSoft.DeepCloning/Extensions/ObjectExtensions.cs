@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace ShereSoft.Extensions
@@ -9,7 +10,7 @@ namespace ShereSoft.Extensions
     public static class ObjectExtensions
     {
         /// <summary>
-        /// Creates a deep-copied instance of the specified object
+        /// Creates a deep copy of the specified object
         /// </summary>
         /// <typeparam name="T">The type of object to clone.</typeparam>
         /// <param name="value">Any object</param>
@@ -24,11 +25,11 @@ namespace ShereSoft.Extensions
                 throw new ArgumentNullException(nameof(value));
             }
 
-            return DeepCloning<T>.Copy(value, DeepCloningOptions.None);
+            return DeepCloning<T>.CloneObject(value, new Dictionary<object, object>(), DeepCloningOptions.None);
         }
 
         /// <summary>
-        /// Creates a deep-copied instance of the specified object with options
+        /// Creates a deep copy of the specified object with options
         /// </summary>
         /// <typeparam name="T">The type of object to clone.</typeparam>
         /// <param name="value">Any object</param>
@@ -49,7 +50,17 @@ namespace ShereSoft.Extensions
                 throw new ArgumentNullException(nameof(options));
             }
 
-            return DeepCloning<T>.Copy(value, options);
+            var reusableClones = new Dictionary<object, object>();
+
+            if (options.UnclonableObjects.Count > 0)
+            {
+                foreach (var unclonable in options.UnclonableObjects)
+                {
+                    reusableClones.Add(unclonable, unclonable);
+                }
+            }
+
+            return DeepCloning<T>.CloneObject(value, reusableClones, options);
         }
     }
 }

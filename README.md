@@ -24,7 +24,7 @@ Using the extension methods (included) is recommended.
 using ShereSoft.Extensions;
 :
 
-Customer customer = new Customer();
+var customer = new Customer();
 :
 
 Customer clone = customer.DeepClone();
@@ -60,4 +60,24 @@ Customer clone = customer.DeepClone(options);
 Debug.WriteLine(Object.ReferenceEquals(customer, clone));  // False (Default is reuse, NOT deep copy)
 ```
 > "static readonly" fields are assumed to be immutable. If your code is not, which by the way is not the best practice, use this option.
-> 
+
+### .UnclonableObjects.Add(object)
+``` csharp
+class Customer
+{
+    public System.Globalization.CultureInfo UserCulture { get; set; }  // Built-in, read-only CultureInfo object...
+    :
+}
+
+var customer = new Customer();
+:
+
+var options = new DeepCloningOptions();
+options.UnclonableObjects.Add(customer.UserCulture);
+
+Customer clone = customer.DeepClone(options);
+
+Debug.WriteLine(Object.ReferenceEquals(customer.UserCulture, clone.UserCulture));  // True
+```
+> Register any objects that do not need deep-copying in DeepCloningOptions.UnclonableObjects. Shallow-copying also improves performance.
+

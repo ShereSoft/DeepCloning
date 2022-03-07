@@ -12,9 +12,7 @@ namespace ShereSoft
     /// </summary>
     public abstract class DeepCloning
     {
-        internal protected delegate object RedirectDelegate(object src, DeepCloningOptions options);
-        internal protected delegate T CloneOneDimArrayDelegate<T>(T src, int length, Dictionary<object, object> objs, DeepCloningOptions options);
-        internal protected delegate T CloneMultiDimArrayDelegate<T>(T src, int[] length, Dictionary<object, object> objs, DeepCloningOptions options);
+        internal delegate object CloneObjectDelegate(object src, Dictionary<object, object> objs, DeepCloningOptions options);
 
 #if DEBUG
         internal protected readonly static ConcurrentDictionary<string, Type> CompiledMapperTypes = new ConcurrentDictionary<string, Type>();
@@ -53,41 +51,68 @@ namespace ShereSoft
         }
 #endif
 
-        internal static bool IsSimpleType(Type type)
+        internal static bool IsSimpleValueType(Type type)
         {
-            if (type.IsPrimitive || type.IsEnum || type == typeof(DateTime) || type == typeof(decimal) || type == typeof(Guid))
+            if (!type.IsValueType)
+            {
+                return false;
+            }
+
+            if (type.IsPrimitive || type == typeof(decimal) || type.IsEnum || type == typeof(DateTime) || type == typeof(Guid))
             {
                 return true;
             }
 
-            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+            var baseType = type;
+
+            while (baseType != typeof(object))
             {
-                var t = type.GetGenericArguments()[0];
-                return (t.IsPrimitive || t.IsEnum || t == typeof(DateTime) || t == typeof(decimal) || t == typeof(Guid));
+                foreach (var field in baseType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+                {
+                    if (!field.FieldType.IsValueType)
+                    {
+                        return false;
+                    }
+                }
+
+                baseType = baseType.BaseType;
             }
 
-            return false;
+            return true;
         }
 
-        internal protected static RedirectDelegate BuildRedirect(Type type)
+        internal static CloneObjectDelegate BuildRedirect(Type type)
         {
-            var method = new DynamicMethod(String.Empty, typeof(object), new Type[] { typeof(object), typeof(DeepCloningOptions) });
+            var method = new DynamicMethod(String.Empty, typeof(object), new Type[] { typeof(object), typeof(Dictionary<object, object>), typeof(DeepCloningOptions) });
             var il = method.GetILGenerator();
-
-            il.Emit(OpCodes.Ldarg_0);
 
             if (type.IsValueType)
             {
-                if (IsSimpleType(type))
+                if (IsSimpleValueType(type))
                 {
+                    il.Emit(OpCodes.Ldarg_0);
                     il.Emit(OpCodes.Ret);
-                }
 
+#if NET5_0_OR_GREATER
+                    return method.CreateDelegate<CloneObjectDelegate>();
+#else
+                    return (CloneObjectDelegate)method.CreateDelegate(typeof(CloneObjectDelegate));            
+#endif
+                }
+    
+                il.Emit(OpCodes.Ldsfld, typeof(DeepCloning<>).MakeGenericType(type).GetField(nameof(DeepCloning<object>.CloneObject), BindingFlags.NonPublic | BindingFlags.Static));
+                il.Emit(OpCodes.Ldarg_0);
                 il.Emit(OpCodes.Unbox_Any, type);
+            }
+            else
+            {
+                il.Emit(OpCodes.Ldsfld, typeof(DeepCloning<>).MakeGenericType(type).GetField(nameof(DeepCloning<object>.CloneObject), BindingFlags.NonPublic | BindingFlags.Static));
+                il.Emit(OpCodes.Ldarg_0);
             }
 
             il.Emit(OpCodes.Ldarg_1);
-            il.Emit(OpCodes.Call, typeof(DeepCloning<>).MakeGenericType(type).GetMethod(nameof(DeepCloning<object>.Copy), new[] { type, typeof(DeepCloningOptions) }));
+            il.Emit(OpCodes.Ldarg_2);
+            il.Emit(OpCodes.Call, typeof(CloneObjectDelegate<>).MakeGenericType(type).GetMethod("Invoke"));
 
             if (type.IsValueType)
             {
@@ -97,9 +122,9 @@ namespace ShereSoft
             il.Emit(OpCodes.Ret);
 
 #if NET5_0_OR_GREATER
-            return method.CreateDelegate<RedirectDelegate>();
+            return method.CreateDelegate<CloneObjectDelegate>();
 #else
-            return (RedirectDelegate)method.CreateDelegate(typeof(RedirectDelegate));            
+            return (CloneObjectDelegate)method.CreateDelegate(typeof(CloneObjectDelegate));            
 #endif
         }
     }

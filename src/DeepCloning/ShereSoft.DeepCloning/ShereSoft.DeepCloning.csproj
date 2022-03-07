@@ -13,8 +13,15 @@
     <PackageProjectUrl>https://github.com/ShereSoft/DeepCloning</PackageProjectUrl>
     <Copyright>Copyright © 2020-2022 Sheresoft</Copyright>
     <Description>Provides a set of methods to deep-copy an instance of any object. Implemented in Common Intermediate Language (.NET Assembler) offering performance equivalent to hand-written C# code. Multi-targeted libraries. (NOT a .NET Standard library) No dependencies.</Description>
-    <Version>1.0.2</Version>
+    <Version>1.1.0</Version>
     <PackageReleaseNotes>
+1.1.0
+ * Can optionally specify unclonable objects in DeepCloningOptions.UnclonableObjects (Use this feature to force to shallow-copy)
+ * Use the native value copy for all simple value types not limited to primitives (Improved simple value type detection)
+ * Fixed issues with reusing plain object instances (A new instance was created every time. No reusing.)
+ * Inlined the sealed type detection and the actual/declared type detection as part of the cloner
+ * Improved startup time
+
 1.0.2
  * Fixed issues with copying null elements in collections
  * Improved performance by a single delegate, more optimized runtime evaluation, more inlining implementation and more optimized Assembler code
@@ -46,5 +53,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net6.0|AnyCPU'">
     <WarningLevel>5</WarningLevel>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Update="ShereSoft.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
 </Project>
