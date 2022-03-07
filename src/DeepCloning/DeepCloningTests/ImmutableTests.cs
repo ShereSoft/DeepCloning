@@ -14,7 +14,7 @@ namespace DeepCloningTests
         {
             var original = new Immutable(333) { Flag = true };
 
-            var clone = DeepCloning<Immutable>.Copy(original);
+            var clone = (Immutable)DeepCloning<object>.Copy(original);
 
             Assert.NotNull(clone);
             Assert.NotSame(original, clone);

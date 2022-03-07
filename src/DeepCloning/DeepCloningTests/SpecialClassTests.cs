@@ -33,16 +33,41 @@ namespace DeepCloningTests
         }
 
         [Fact]
-        public void Copy_DeepCopies_ObjectDefinedAsBase()
+        public void Copy_DeepCopies_ObjectDefinedAsAbstract()
         {
-            TestBaseClass original = new TestDerivedClass { Index = 1, Name = "OK" };
+            var original = new TestDerivedClass { Index = 1, Name = "OK" };
 
-            var clone = DeepCloning<TestBaseClass>.Copy(original);
+            var clone = DeepCloning<TestAbstractClass>.Copy(original);
 
             Assert.NotSame(original, clone);
-            Assert.IsType<TestDerivedClass>(clone);
+            Assert.Equal(original.GetType(), clone.GetType());
             Assert.Equal(original.Index, clone.Index);
             Assert.Equal(original.Name, clone.Name);
+        }
+
+        [Fact]
+        public void Copy_DeepCopies_ObjectDefinedAsBase()
+        {
+            var original = new TestMoreDerivedClass { Index = 1, Name = "OK" };
+
+            var clone = DeepCloning<TestDerivedClass>.Copy(original);
+
+            Assert.NotSame(original, clone);
+            Assert.Equal(original.GetType(), clone.GetType());
+            Assert.Equal(original.Index, clone.Index);
+            Assert.Equal(original.Name, clone.Name);
+        }
+
+        [Fact]
+        public void Copy_DeepCopies_SealedClass()
+        {
+            var original = new SealedClass { String = "456" };
+
+            var clone = DeepCloning<SealedClass>.Copy(original);
+
+            Assert.NotSame(original, clone);
+            Assert.Equal(original.GetType(), clone.GetType());
+            Assert.Equal(original.String, clone.String);
         }
 
         [Fact]
@@ -104,7 +129,7 @@ namespace DeepCloningTests
     class SpecialClass
     {
         public SpecialClass Self { get; set; }
-        public TestBaseClass DerivedClassDefinedAsBaseClass { get; set; }
+        public TestAbstractClass DerivedClassDefinedAsBaseClass { get; set; }
         public object AnyObject { get; set; }
     }
 
@@ -117,14 +142,24 @@ namespace DeepCloningTests
         public TestStruct Struct { get; set; }
     }
 
-    abstract class TestBaseClass
+    abstract class TestAbstractClass
     {
         public abstract string Name { get; set; }
         public int Index { get; set; }
     }
 
-    class TestDerivedClass : TestBaseClass
+    class TestDerivedClass : TestAbstractClass
     {
         public override string Name { get; set; }
+    }
+
+    class TestMoreDerivedClass : TestDerivedClass
+    {
+        public override string Name { get; set; }
+    }
+
+    sealed class SealedClass
+    {
+        public string String { get; set; }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace ShereSoft
 {
@@ -13,7 +14,7 @@ namespace ShereSoft
         public static readonly DeepCloningOptions None = new DeepCloningOptions();
 
         /// <summary>
-        /// Gets or sets a value that indicates whether a reference to the string value gets reused or the value gets deep copied. Default is false (reference copy).
+        /// Gets or sets a value that indicates whether the string value gets shallow-copied or deep-copied. Default is false (shallow-copy).
         /// </summary>
 #if NET5_0_OR_GREATER
         public bool DeepCloneStrings { get; init; }
@@ -22,13 +23,18 @@ namespace ShereSoft
 #endif
 
         /// <summary>
-        /// Gets or sets a value that indicates whether a reference to the singleton object gets reused or the value gets deep copied. Default is false (reuse).
+        /// Gets or sets a value that indicates whether the singleton object gets shallow-copied or deep-copied. Default is false (shallow-copy).
         /// </summary>
 #if NET5_0_OR_GREATER
         public bool DeepCloneSingletons { get; init; }
 #else
         public bool DeepCloneSingletons { get; set; }
 #endif
+
+        /// <summary>
+        /// Gets a list of objects that should not be deep-copied.
+        /// </summary>
+        public ICollection<object> UnclonableObjects { get; } = new HashSet<object>();
 
 #if UNDER_DEVELOPMENT
         /// <summary>

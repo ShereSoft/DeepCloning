@@ -3,5 +3,5 @@ using System.Collections.Generic;
 
 namespace ShereSoft
 {
-    delegate T CloneObjectDelegate<T>(T src, Dictionary<object, object> objs, DeepCloningOptions options);
+    delegate T CloneObjectDelegate<T>(T source, Dictionary<object, object> reusableClones, DeepCloningOptions options);
 }

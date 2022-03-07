@@ -12,10 +12,9 @@ namespace ShereSoft
     /// <typeparam name="T">The type of object to clone.</typeparam>
     public sealed class DeepCloning<T> : DeepCloning
     {
-        internal static CloneObjectDelegate<T> CloneObject = null;
-        static ConcurrentDictionary<Type, RedirectDelegate> Redirects = new ConcurrentDictionary<Type, RedirectDelegate>();
-
-        readonly static Type DeclaredType = typeof(T);
+        internal readonly static CloneObjectDelegate<T> CloneObject = null;
+        internal readonly static ConcurrentDictionary<Type, CloneObjectDelegate> Redirects = new ConcurrentDictionary<Type, CloneObjectDelegate>();
+        internal readonly static Type DeclaredType = typeof(T);
 
         static DeepCloning()
         {
@@ -55,18 +54,13 @@ namespace ShereSoft
             }
             else if (DeclaredType.IsValueType)
             {
-                if (IsSimpleType(DeclaredType))
+                if (IsSimpleValueType(DeclaredType))
                 {
                     CloneObject = CloneSimpleType;
                 }
                 else
                 {
-                    var anyCloner = AnyCloner.Buid<T>();
-
-                    if (anyCloner != null)
-                    {
-                        CloneObject = anyCloner;
-                    }
+                    CloneObject = AnyCloner.Buid<T>();
                 }
             }
             else if (DeclaredType == typeof(string))
@@ -77,54 +71,13 @@ namespace ShereSoft
             {
                 CloneObject = CloneObjectType;
             }
-            else if (!DeclaredType.IsAbstract && !DeclaredType.IsInterface)
+            else if (DeclaredType.IsAbstract || DeclaredType.IsInterface)
             {
-                var anyCloner = AnyCloner.Buid<T>();
-                
-                if (anyCloner != null)
-                {
-                    if (DeclaredType.IsSealed)
-                    {
-                        CloneObject = (src, objs, options) =>
-                        {
-                            if (objs.TryGetValue(src, out var existingClone))
-                            {
-                                return (T)existingClone;
-                            }
-
-                            return anyCloner(src, objs, options);
-                        };
-                    }
-                    else
-                    {
-                        CloneObject = (src, objs, options) =>
-                        {
-                            var actualType = src.GetType();
-
-                            if (actualType != DeclaredType)
-                            {
-                                if (!Redirects.TryGetValue(actualType, out var redirect))
-                                {
-                                    redirect = BuildRedirect(actualType);
-                                    Redirects.TryAdd(actualType, redirect);
-                                }
-
-                                return (T)redirect(src, options);
-                            }
-
-                            if (objs.TryGetValue(src, out var existingClone))
-                            {
-                                return (T)existingClone;
-                            }
-
-                            return anyCloner(src, objs, options);
-                        };
-                    }
-                }
+                CloneObject = CloneAbstractType;
             }
             else
             {
-                CloneObject = CloneAbstractType;
+                CloneObject = AnyCloner.Buid<T>();
             }
 
 #if DEBUG
@@ -168,8 +121,23 @@ namespace ShereSoft
             {
                 return default;
             }
-            
-            return CloneObject(value, new Dictionary<object, object>(), options ?? DeepCloningOptions.None);
+
+            if (options == null)
+            {
+                options = DeepCloningOptions.None;
+            }
+
+            var reusableClones = new Dictionary<object, object>();
+
+            if (options.UnclonableObjects.Count > 0)
+            {
+                foreach (var unclonable in options.UnclonableObjects)
+                {
+                    reusableClones.Add(unclonable, unclonable);
+                }
+            }
+
+            return CloneObject(value, reusableClones, options);
         }
 
 #if NET45 || NET451_OR_GREATER || NETCOREAPP
@@ -200,6 +168,18 @@ namespace ShereSoft
         {
             var actualType = value.GetType();
 
+            if (actualType.IsValueType)
+            {
+                if (DeepCloning.IsSimpleValueType(actualType))
+                {
+                    return value;
+                }
+            }
+            else if (reusableClones.TryGetValue(value, out var existingClone))
+            {
+                return (T)existingClone;
+            }
+
             if (actualType != DeclaredType)
             {
                 if (!Redirects.TryGetValue(actualType, out var redirect))
@@ -208,15 +188,14 @@ namespace ShereSoft
                     Redirects.TryAdd(actualType, redirect);
                 }
 
-                return (T)redirect(value, options);
+                return (T)redirect(value, reusableClones, options);
             }
 
-            if (reusableClones.TryGetValue(value, out var existingClone))
-            {
-                return (T)existingClone;
-            }
+            var plainObject = new object();
 
-            return (T)new object();
+            reusableClones.Add(value, plainObject);
+
+            return (T)plainObject;
         }
 
 #if NET45 || NET451_OR_GREATER || NETCOREAPP
@@ -224,6 +203,11 @@ namespace ShereSoft
 #endif
         static T CloneAbstractType(T value, Dictionary<object, object> reusableClones, DeepCloningOptions options)
         {
+            if (reusableClones.TryGetValue(value, out var existingClone))
+            {
+                return (T)existingClone;
+            }
+
             var actualType = value.GetType();
 
             if (!Redirects.TryGetValue(actualType, out var redirect))
@@ -232,7 +216,7 @@ namespace ShereSoft
                 Redirects.TryAdd(actualType, redirect);
             }
 
-            return (T)redirect(value, options);
+            return (T)redirect(value, reusableClones, options);
         }
     }
 }

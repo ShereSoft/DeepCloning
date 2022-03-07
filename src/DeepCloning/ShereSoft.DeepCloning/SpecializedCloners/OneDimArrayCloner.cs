@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ShereSoft.SpecializedCloners
 {
-    static class OneDimArrayCloner
+    class OneDimArrayCloner : ClonerBase
     {
         public static CloneObjectDelegate<T> Buid<T>()
         {
@@ -23,9 +20,21 @@ namespace ShereSoft.SpecializedCloners
             il.DeclareLocal(typeof(int));
             il.DeclareLocal(typeof(bool));  // DeepCloneStrings
             il.DeclareLocal(type);  // type-casted src
+            il.DeclareLocal(typeof(object));  // existingClone
+
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldloca_S, 4);  // existingClone
+            il.Emit(OpCodes.Call, ObjectDictionaryByObjectTryGetValueMethodInfo);
+            var cacheNotAvailable = il.DefineLabel();
+            il.Emit(OpCodes.Brfalse, cacheNotAvailable);
+            il.Emit(OpCodes.Ldloc_S, 4);  // existingClone
+            il.Emit(OpCodes.Ret);
+            il.MarkLabel(cacheNotAvailable);
+
 
             il.Emit(OpCodes.Ldarg_2);
-            il.Emit(OpCodes.Call, typeof(DeepCloningOptions).GetProperty(nameof(DeepCloningOptions.None.DeepCloneStrings)).GetGetMethod());
+            il.Emit(OpCodes.Call, DeepCloningOptionsGetDeepCloneStringsMethodInfo);
             il.Emit(OpCodes.Stloc_2);
 
             il.Emit(OpCodes.Ldarg_0);
@@ -40,7 +49,7 @@ namespace ShereSoft.SpecializedCloners
             il.Emit(OpCodes.Ldarg_1);
             il.Emit(OpCodes.Ldloc_3);
             il.Emit(OpCodes.Ldloc_0);
-            il.Emit(OpCodes.Callvirt, typeof(Dictionary<object, object>).GetMethod("Add"));
+            il.Emit(OpCodes.Call, ObjectDictionaryByObjectAddMethodInfo);
 
             il.Emit(OpCodes.Ldc_I4_0);
             il.Emit(OpCodes.Stloc_1);
@@ -121,7 +130,7 @@ namespace ShereSoft.SpecializedCloners
             }
             else if (t.IsValueType)
             {
-                if (!DeepCloning.IsSimpleType(t))
+                if (!DeepCloning.IsSimpleValueType(t))
                 {
                     il.Emit(OpCodes.Ldsfld, typeof(DeepCloning<>).MakeGenericType(t).GetField(nameof(DeepCloning<T>.CloneObject), BindingFlags.NonPublic | BindingFlags.Static));
                     il.Emit(OpCodes.Ldloc_3);
@@ -149,8 +158,8 @@ namespace ShereSoft.SpecializedCloners
                 il.Emit(OpCodes.Ldloc_2);
                 var skipDeepCloneString = il.DefineLabel();
                 il.Emit(OpCodes.Brfalse, skipDeepCloneString);
-                il.Emit(OpCodes.Callvirt, typeof(string).GetMethod(nameof(String.Empty.ToCharArray), Type.EmptyTypes));
-                il.Emit(OpCodes.Newobj, typeof(string).GetConstructor(new[] { typeof(char[]) }));
+                il.Emit(OpCodes.Call, StringToCharArrayMethodInfo);
+                il.Emit(OpCodes.Newobj, StringCtor);
                 il.MarkLabel(skipDeepCloneString);
 
                 il.Emit(OpCodes.Stelem, t);
