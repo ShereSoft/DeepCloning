@@ -115,7 +115,7 @@ namespace ShereSoft
             else
             {
                 il.Emit(OpCodes.Ldarg_0);
-                il.Emit(OpCodes.Call, type.GetMethod("MemberwiseClone", BindingFlags.NonPublic | BindingFlags.Instance));
+                il.Emit(OpCodes.Call, type.GetMethod("MemberwiseClone", BindingFlags.NonPublic | BindingFlags.Instance, null, Type.EmptyTypes, null));
                 il.Emit(OpCodes.Stloc_0);
             }
 
